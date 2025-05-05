@@ -1,0 +1,84 @@
+* 3-Input NAND Gate with First Input Inverted
+
+.lib /usr/local/share/pdk/sky130A/libs.tech/ngspice/sky130.lib.spice tt
+
+* Define parameters
+* .param <ident> = <expression>
+
+.param l = 0.15 
+.param w_n_1 = 0.90
+.param mu_factor = 0.3
+.param w_p_2 = 'w_n_1*2' 
+.param w_p_3 = 'w_n_1*mu_factor*3'
+.param as_n_1 = 'w_n_1*2*l' 
+.param pd_n_1 = '2*w_n_1+4*l' 
+.param ad_n_1 = 'w_n_1*2*l'
+.param as_p_2 = 'w_p_2*2*l' 
+.param pd_p_2 = '2*w_p_2+4*l' 
+.param as_p_3 = 'w_p_3*2*l' 
+.param pd_p_3 = '2*w_p_3+4*l'
+
+* Inverter Subcircuit
+.subckt inverter vdd in out vss
+* XMP1 out in vdd vdd sky130_fd_pr__pfet_01v8 l=0.15 w=1.08 ad=0.324 as=0.324 pd=2.76 ps=2.76
+* XMN4 net2 C vss vss sky130_fd_pr__nfet_01v8 l=0.15 w=0.45 ad=0.135 as=0.135 pd=1.5 ps=1.5
+XMP1 out in vdd vdd sky130_fd_pr__pfet_01v8 l={l} w= {w_p_2} ad= {as_p_2} as= {as_p_2} pd= {pd_p_2} ps= {pd_p_2}
+XMN1 out in vss vss sky130_fd_pr__nfet_01v8 l={l} w= {w_n_1} ad= {ad_n_1} as= {ad_n_1} pd= {pd_n_1} ps= {pd_n_1}
+.ends inverter
+
+* NAND Gate Subcircuit Call
+.subckt nand3 vdd A B C out vss
+
+* Invert first input
+Xinv1 vdd A Ainverted vss inverter
+
+* NAND logic
+XMN2 out Ainverted net1 vss sky130_fd_pr__nfet_01v8 l={l} w= {w_n_1} ad= {ad_n_1} as= {ad_n_1} pd= {pd_n_1} ps= {pd_n_1}
+XMN3 net1 B net2 vss sky130_fd_pr__nfet_01v8 l={l} w= {w_n_1} ad= {ad_n_1} as= {ad_n_1} pd= {pd_n_1} ps= {pd_n_1}
+XMN4 net2 C vss vss sky130_fd_pr__nfet_01v8 l={l} w= {w_n_1} ad= {ad_n_1} as= {ad_n_1} pd= {pd_n_1} ps= {pd_n_1}
+
+XMP2 out Ainverted vdd vdd sky130_fd_pr__pfet_01v8 l={l} w= {w_p_3} ad= {as_p_3} as= {as_p_3} pd= {pd_p_3} ps= {pd_p_3}
+XMP3 out B vdd vdd sky130_fd_pr__pfet_01v8 l={l} w= {w_p_3} ad= {as_p_3} as= {as_p_3} pd= {pd_p_3} ps= {pd_p_3}
+XMP4 out C vdd vdd sky130_fd_pr__pfet_01v8 l={l} w= {w_p_3} ad= {as_p_3} as= {as_p_3} pd= {pd_p_3} ps= {pd_p_3}
+.ends nand3
+
+* NAND Gate Instance
+X1 vdd in1 in2 in3 out vss nand3
+
+* Voltage Sources
+Vdd vdd 0 DC 1.8
+Vss vss 0 DC 0
+
+Vin1 in1 0 DC 0
+Vin2 in2 0 PULSE(0 1.8 10p 100p 0p 4n 8n)
+Vin3 in3 0 PULSE(0 1.8 10p 10p 0p 4n 8n)
+
+* Load Capacitor
+C1 out 0 1f
+
+* Transient Analysis
+.tran 10ps 40ns 0ns
+
+* Measure Rise and Fall Times
+.measure tran nand_risetime TRIG v(out) VAL=0.18 RISE=1 TARG v(out) VAL=1.62 RISE=1
+.measure tran nand_falltime TRIG v(out) VAL=1.62 FALL=1 TARG v(out) VAL=0.18 FALL=1
+
+*.measure tran enery_rise param = 'v(vdd) * i(vdd)' when v(in2)=0 cross=1
+*.measure tran enery_fall param = 'v(vdd) * i(vdd)' when v(in2)=1.8 cross=1
+
+*.measure p_static param = 'v(vdd)*i(vdd)'
+
+*.measure tran irise integ i(vdd) from=1n to =3n
+*.measure tran ifall integ i(vdd) from=4n to =7n
+
+*let crise = irise/1.8
+*let cfall = ifall/1.8
+.measure 
+* Plot Results
+.control
+run
+
+plot v(out) 2+v(in1) 4+v(in2) 6+v(in3) v(vss)
+.endc
+.end
+

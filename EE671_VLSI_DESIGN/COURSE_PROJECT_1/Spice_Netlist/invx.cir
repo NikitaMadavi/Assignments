@@ -1,0 +1,40 @@
+* Invertor for equal rise and fall time
+
+.lib /usr/local/share/pdk/sky130A/libs.tech/ngspice/sky130.lib.spice tt
+
+* Unit Invertor
+.subckt invertor vdd A Y vss
+* [MOSFET_NAME] [Drain] [Gate] [Source] [Body] [technology] [length] [width] [drain area] [source area] [drain perimeter] [source perimeter]
+XMP1 Y A vdd vdd sky130_fd_pr__pfet_01v8 l=0.15 w=1.33768 ad=.401304 as=.401304 pd=3.27536 ps=3.27536
+XMN1 Y A vss vss sky130_fd_pr__nfet_01v8 l=0.15 w=0.45 ad=0.135 as=0.135 pd=1.5 ps=1.5
+.ends
+
+* Invertor1 [vdd] [input] [output] [vss] 
+X1 1 vin vout 0 invertor
+
+* Voltage sources
+V1 1 0 DC 1.8
+
+* Transient Analysis
+V2 vin 0 pulse(0 1.8 0 10pS 10pS 1nS 2nS)
+
+* Load Capacitor
+C1 vout 0 0.5f
+
+* Invertor rise time and fall time
+.tran 1ps 10nS 0ps
+.measure tran inv_risetime TRIG v(vout) VAL=0.36 RISE=3 TARG v(vout) VAL=1.44 RISE=3
+.measure tran inv_falltime TRIG v(vout) VAL=1.44 FALL=3 TARG v(vout) VAL=0.36 FALL=3
+.measure tran propogation_delay param='(inv_risetime+inv_falltime)/2' 
+
+.control
+run
+
+
+plot v(vout) 2+v(vin)
+.endc 
+.end
+
+
+ 
+

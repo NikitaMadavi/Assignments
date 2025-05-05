@@ -1,0 +1,30 @@
+VERSION 5.7 ;
+  NOWIREEXTENSIONATPIN ON ;
+  DIVIDERCHAR "/" ;
+  BUSBITCHARS "[]" ;
+MACRO nand3
+  CLASS BLOCK ;
+  FOREIGN nand3 ;
+  ORIGIN 5.550 1.050 ;
+  SIZE 11.090 BY 6.910 ;
+  OBS
+      LAYER nwell ;
+        RECT -3.010 5.840 4.490 5.860 ;
+        RECT -4.650 4.950 5.540 5.840 ;
+        RECT -4.640 1.950 5.540 4.950 ;
+        RECT -3.010 1.930 4.490 1.950 ;
+      LAYER li1 ;
+        RECT -4.210 4.990 -3.460 5.490 ;
+        RECT -4.310 3.000 -3.960 3.900 ;
+        RECT -3.690 3.000 -3.340 3.900 ;
+        RECT -4.310 0.300 -3.980 1.350 ;
+        RECT -3.710 0.300 -3.380 1.350 ;
+        RECT -4.200 -0.970 -3.450 -0.540 ;
+      LAYER met1 ;
+        RECT -5.550 5.110 3.750 5.390 ;
+        RECT -5.550 5.100 -2.110 5.110 ;
+        RECT -5.260 -0.910 4.790 -0.610 ;
+  END
+END nand3
+END LIBRARY
+
